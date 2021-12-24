@@ -1,0 +1,13 @@
+{
+  "conjoinedCommands": true,
+  "sectionDivider": "&&",
+  "commandDivider": "|",
+  "argumentIdentifiers": [
+    "--",
+    "-"
+  ],
+  "argumentAssigners": [
+    "==",
+    "="
+  ]
+}
