@@ -1,7 +1,10 @@
 import os
 from .superset_config import CONFIG
+from superset.extension import Extension
 
 class ConsoleCommand:
+  TERMINATE = "terminate"
+
   @staticmethod
   def build(instructions: list):
     result = ""
@@ -38,6 +41,8 @@ class ConsoleCommand:
   def __init__(self, command: str) -> None:
     self.pre = command
     self.__command = command
+
+    self.__applied = []
   
   def __str__(self) -> str:
       return self.__command
@@ -127,7 +132,10 @@ class ConsoleCommand:
     return parsed_arguments
   
   def execute(self) -> None:
-    instructions = self._parse()
+    instructions = self.instructions
+    if instructions == self.TERMINATE:
+      return
+
     command = ConsoleCommand.build(instructions)
     
     message = self.pre + " -> " + command
@@ -142,7 +150,31 @@ class ConsoleCommand:
     print("-" * length)
     
     os.system(command)
-  
+
+  def apply(self, ext: Extension):
+    self.__applied.append(
+      ext().run
+    )
+
   @property
-  def command(self):
-    return self._parse()
+  def instructions(self):
+    parsed = self._parse()
+
+    terminate = False
+    result = []
+    for element in parsed:
+      final = element
+      for affect in self.__applied:
+        final = affect(final)
+
+        if final == self.TERMINATE:
+          terminate = True
+
+          break
+
+      result.append(final)
+
+      if terminate:
+        break
+
+    return result if not terminate else self.TERMINATE
