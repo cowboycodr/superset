@@ -4,6 +4,7 @@ from superset.extension import Extension
 
 class ConsoleCommand:
   TERMINATE = "terminate"
+  CANCEL    = "cancel"
 
   @staticmethod
   def build(instructions: list):
@@ -42,7 +43,7 @@ class ConsoleCommand:
     self.pre = command
     self.__command = command
 
-    self.__applied = []
+    self.__applied: list[tuple] = []
   
   def __str__(self) -> str:
       return self.__command
@@ -58,7 +59,7 @@ class ConsoleCommand:
       result.remove("")
     return result
   
-  def _parse(self):
+  def _parse(self) -> list[dict]:
     result = []
     
     commands = self.__command.split(CONFIG["commandDivider"])
@@ -152,8 +153,11 @@ class ConsoleCommand:
     os.system(command)
 
   def apply(self, ext: Extension):
+    trigger = ext().TRIGGER
+    affect = ext().run
+
     self.__applied.append(
-      ext().run
+      (trigger, affect)
     )
 
   @property
@@ -164,8 +168,22 @@ class ConsoleCommand:
     result = []
     for element in parsed:
       final = element
-      for affect in self.__applied:
-        final = affect(final)
+      keyword, _ = list(element.items())[0]
+
+      for extension in self.__applied:
+        trigger, affect = extension
+
+        if keyword == trigger or trigger == None:
+          affected = affect(keyword, final[keyword])
+
+          if affected == self.CANCEL:
+            continue
+          elif affected == None:
+            continue
+
+          final = affected
+        else:
+          continue
 
         if final == self.TERMINATE:
           terminate = True

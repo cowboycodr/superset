@@ -1,7 +1,7 @@
 {
   "conjoinedCommands": true,
   "sectionDivider": "&",
-  "commandDivider": "|",
+  "commandDivider": "@",
   "argumentIdentifiers": [
     "--",
     "-"
